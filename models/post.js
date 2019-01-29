@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 //Define a schema
 const Schema = mongoose.Schema;
-
+const ObjectId = mongoose.Schema.Types.ObjectId;
 const PostModelSchema = new Schema({
   content: { type: String, required: true  },
   createAt: { type: Date, default: Date.now },
