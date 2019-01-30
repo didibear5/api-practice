@@ -1,10 +1,9 @@
 const postController = require('../controller/post')
 
-module.exports = function(app){
-  app.get('/post', postController.getAll)
-  app.get('/post/:postId', postController.getOne)
-  app.post('/post', postController.post)
-  app.delete('/post/:postId', postController.deleteOne)
-  app.put('/post/:postId', postController.put)
+module.exports = function (app, auth) {
+  app.get('/post', postController.getPostList)
+  app.get('/post/:postId', postController.getOnePost)
+  app.post('/post', auth, postController.createPost)// 路徑，中間層，controller
+  app.delete('/post/:postId', auth, postController.deletePost)
+  app.put('/post/:postId', auth, postController.updatePost)
 }
-

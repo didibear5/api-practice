@@ -1,53 +1,68 @@
-const Cmt = require('../models/comment')
+const Comment = require('../models/comment')
+const _ = require('lodash')
 
-async function getAll(req,res){
-  const cmts = await Cmt.find({})
-  res.send(cmts)
+async function getOneComment (req, res) {
+  console.log(req.params)
+  const comment = await Comment.findOne({
+    _id: req.params.commentId
+  }).populate('author', 'username')
+  res.send(comment)
 }
 
-async function getOne(req,res){
+async function createComment (req, res) {
   console.log(req.params)
-  const cmt = await Cmt.findOne({
-    _id:req.params.commentId
-  })
-  res.send(cmt)
-}
-
-async function post(req,res){
-  console.log(req.params)
-  const newCmt = new Cmt({
+  const newComment = new Comment({
     post_id: req.params.postId,
-    content: req.body.content
+    content: req.body.content,
+    author: req.user._id
   })
-  await newCmt.save()
-  console.log(req.body);
+  await newComment.save()
+  console.log(req.body)
   res.send('comment created ok')
 }
 
-async function deleteOne(req,res){
-  Cmt.findOneAndDelete(
-    {_id:req.params.commentId}
-  ).exec()
-  res.send('comment deleted')
+async function deleteComment (req, res) {
+  try {
+    // 取出文章
+    if (_.isEmpty(req.params.commentId)) return res.send({ status: 'error', message: '請輸入留言ID' })
+    const comment = await Comment.findOne({ _id: req.params.commentId })
+    if (_.isEmpty(comment)) return res.send({ status: 'error', message: '找不到留言' })
+    // 檢查文章作者是否為本人
+    if (!req.isCurrentUser(comment.author)) return res.send({ status: 'error', message: '無權限' })
+    // 是本人更新文章內容
+    await comment.remove({ _id: req.params.commentId })
+    // 回傳成功訊息
+    res.send({ status: 'success', message: '留言刪除成功' })
+  } catch (error) {
+    console.log(error)
+    res.send({ status: 'error', message: '未預期的錯誤' })
+  }
 }
 
-async function put(req,res){
-  await Cmt.findOneAndUpdate(
-    {_id:req.params.commentId},
-    {
-      '$set':{
-        content: req.body.content,
-        updateAt: new Date()
-      }
-    }
-  ).exec()
-  res.send('comment updated')
+async function updateComment (req, res) {
+  try {
+    // 取出文章
+    if (_.isEmpty(req.params.commentId)) return res.send({ status: 'error', message: '請輸入留言ID' })
+    const comment = await Comment.findOne({ _id: req.params.commentId })
+    if (_.isEmpty(comment)) return res.send({ status: 'error', message: '找不到留言' })
+    // 檢查文章作者是否為本人
+    if (!req.isCurrentUser(comment.author)) return res.send({ status: 'error', message: '無權限' })
+    // 是本人更新文章內容
+    await comment.update({
+      content: req.body.content,
+      updateAt: new Date()
+    })
+    // 回傳成功訊息
+    res.send({ status: 'success', message: '留言更改成功' })
+  } catch (error) {
+    console.log(error)
+    res.send({ status: 'error', message: '未預期的錯誤' })
+  }
 }
 
 module.exports = {
-  getAll:getAll,
-  getOne:getOne,
-  post:post,
-  deleteOne:deleteOne,
-  put:put,
+  getOneComment: getOneComment,
+  createComment: createComment,
+  deleteComment: deleteComment,
+  updateComment: updateComment
 }
