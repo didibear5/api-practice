@@ -22,7 +22,7 @@ async function createPost (req, res) {
   })
   await newPost.save()
   console.log(req.body)
-  res.send('post created ok')
+  res.send({ status: 'success', message: 'post created' })
 }
 
 async function deletePost (req, res) {

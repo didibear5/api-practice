@@ -6,6 +6,8 @@ const app = express()
 app.use(bodyParser.json())
 const auth = require('./auth')
 
+app.use(express.static('public'))// 讀資料夾裡的檔案
+
 require('./db')
 require('./routes/post')(app, auth)
 require('./routes/comment')(app, auth)

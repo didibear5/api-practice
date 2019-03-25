@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <title>Document</title>
+</head>
+<body>
+  <div class="container">
+    <table class="table table-dark" id="post-list">
+      <thead>
+        <tr>
+          <td>作者</td>
+          <td>內容</td>
+          <td>建立時間</td>
+          <td></td>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <form id="create-post-form">
+      <div class="form-group">
+        <label for="post-content">新增文章內容</label>
+        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+<!-- 畫面出來在在js -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.min.js"></script>
+  <script>
+    (function greet(){
+      if(localStorage.getItem('status') === 'loginSuccess'){
+        $('.container').prepend(`
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>登入成功</strong>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        `);
+        localStorage.removeItem('status');
+      }
+    })()
+
+    function fetchPosts(){
+      ajax("GET", '/post/')
+      .then(res => {
+        console.log(res)
+        const postTemplate = res.map(post => {
+          const createTime = moment(post.createAt).format('YYYY-MM-DD HH:mm:ss')
+          return`
+            <tr>
+              <td>${_.get(post,'author.username','找不到使用者')}</td>
+              <td>${post.content}</td>
+              <td>${createTime}</td>
+              <td><button type="button" class="btn btn-danger delete-post" data-id="${post._id}">X</button></td>
+            </tr>
+          `;
+        });
+        $('#post-list tbody').html(postTemplate.join(''));
+      })
+      .catch(err =>{
+        console.error(err);
+      });
+    }
+    fetchPosts();
+
+    $('#create-post-form').submit(function(event){
+      event.preventDefault();
+      $('#create-post-form > button').attr('disabled', 'disable');
+      $('#create-post-form > button').html('Submit...');
+      const content = event.target[0].value;
+      createPost(content);
+    })
+
+    function createPost(content){
+      const token = localStorage.getItem('auth-token');
+      if(_.isEmpty(token)) return redirectToLogin();
+      const data =  JSON.stringify({ content });
+      ajax("POST", '/post', data)
+      .then(res => {
+        if(res.message === "Invalid token") return redirectToLogin();
+        fetchPosts();
+      })
+      .catch(err =>{
+        console.error(err);
+      })
+      .finally(() => {
+        $('#create-post-form > button').attr('disabled', false);
+        $('#create-post-form > button').html('Submit');
+      });
+    }
+
+    $('#post-list').on('click', '.delete-post' ,e => {
+      e.preventDefault();
+      const postId = e.target.dataset.id;
+
+      ajax("DELETE", '/post/' + postId)
+      .then(res => {
+        if(res.message === "Invalid token") return redirectToLogin();
+        fetchPosts();
+      })
+      .catch(err =>{
+        console.error(err);
+      });
+    });
+ 
+    function redirectToLogin(){
+      const res = confirm('是否到登入頁');
+      if(res)return window.location = '/index.html';
+    }
+
+    function ajax(type, url, data){
+      const token = localStorage.getItem('auth-token');
+      if(_.isEmpty(token)) return redirectToLogin();
+      return new Promise((reslove, reject) => {
+        $.ajax({
+          type: type,
+          url: url,
+          data: data,
+          dataType: 'json',
+          contentType: "application/json; charset=utf-8",
+          headers: {
+            authorization: 'Bearer ' + token
+          }
+        }).done(reslove)
+        .fail(reject);
+      });
+    }
+  </script>
+</body>
+</html>
