@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <title>Document</title>
+  <style>
+  .btn-grp{
+    margin-top: 10px;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>文章</h2>
+    <div class="card">
+      <div class="card-body">
+      </div>
+    </div>
+    <br>
+    <h2>留言</h2>
+    <ul class="list-group">
+    </ul>
+  </div>
+<!-- 畫面出來在在js -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.min.js"></script>
+  <script>
+    const windowURL = new URL(location.href);
+    const params = windowURL.searchParams;
+    const postId = params.get('postId');
+
+    function fetchPost(){
+      ajax("GET", '/post/' + postId)
+      .then(res => {
+        const postTemplate = res.map(post => {
+          const createTime = moment(post.createAt).format('YYYY-MM-DD HH:mm:ss')
+          return`
+            <div>
+              <div>作者：${_.get(post,'author.username','找不到使用者')}</div>
+              <hr>
+              <div class="post-content" data-id="${post._id}">${post.content}</div>
+              <div class="btn-grp">
+                <button class="btn btn-primary post-edit">edit</button>
+                <button class="btn btn-primary post-save">save</button>
+              </div>
+              <hr>
+              <div>發文時間：${createTime}</div>
+            </div>
+          `;
+        });
+        $('.card-body').html(postTemplate.join(''));
+        $('.post-save').hide();
+      })
+      .catch(err =>{
+        console.error(err);
+      });
+    }
+    fetchPost();
+
+    function fetchComments(){
+      ajax("GET", '/post/' + postId +'/comment')
+      .then(res => {
+        const commentTemplate = res.map(comment => {
+          const createTime = moment(comment.createAt).format('YYYY-MM-DD HH:mm:ss')
+          return`
+            <li class="list-group-item">
+              <div>作者：${_.get(comment,'author.username','找不到使用者')}</div>
+              <hr>
+              <div class="comment-content" data-id="${comment._id}">${comment.content}</div>
+              <hr>
+              <div>發文時間：${createTime}</div>
+            </li>
+          `;
+        });
+        $('.list-group').html(commentTemplate.join(''));
+      })
+      .catch(err =>{
+        console.error(err);
+      });
+    }
+    fetchComments();
+
+    $('.card-body').on('click', '.post-edit' ,e => {
+      e.preventDefault();
+      const postContent = $('.post-content').text();
+      $('.post-edit').hide();
+      $('.post-save').show();
+      $('.post-content').after(`<input type="text" class="post-input" value="${postContent}" style="width:100%">`)
+      $('.post-content').hide();
+    });
+
+    $('.card-body').on('click', '.post-save' ,e => {
+      const content = $('.post-input').val();
+      const unEdittedContent = $('.post-content').text();
+      const data = JSON.stringify({ content });
+      $('.post-edit').show();
+      $('.post-save').hide();
+      $('.card-body input').remove();
+      $('.post-content').show();
+      if(content === unEdittedContent) return;
+      
+      ajax("PUT", '/post/' + postId, data)
+      .then(res => {
+        if(res.message === "Invalid token") return redirectToLogin();
+        fetchPost();
+      })
+      .catch(err =>{
+        console.error(err);
+      })
+    });
+
+
+    function ajax(type, url, data){
+      const token = localStorage.getItem('auth-token');
+      if(_.isEmpty(token)) return redirectToLogin();
+      return new Promise((reslove, reject) => {
+        $.ajax({
+          type: type,
+          url: url,
+          data: data,
+          dataType: 'json',
+          contentType: "application/json; charset=utf-8",
+          headers: {
+            authorization: 'Bearer ' + token
+          }
+        }).done(reslove)
+        .fail(reject);
+      });
+    }
+  </script>
+</body>
+</html>

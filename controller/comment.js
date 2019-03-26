@@ -1,9 +1,17 @@
 const Comment = require('../models/comment')
 const _ = require('lodash')
 
+async function getCommentList (req, res) {
+  console.log(req.params)
+  const comment = await Comment.find({
+    post_id: req.params.postId
+  }).populate('author', 'username')
+  res.send(comment)
+}
+
 async function getOneComment (req, res) {
   console.log(req.params)
-  const comment = await Comment.findOne({
+  const comment = await Comment.find({
     _id: req.params.commentId
   }).populate('author', 'username')
   res.send(comment)
@@ -61,6 +69,7 @@ async function updateComment (req, res) {
 }
 
 module.exports = {
+  getCommentList: getCommentList,
   getOneComment: getOneComment,
   createComment: createComment,
   deleteComment: deleteComment,

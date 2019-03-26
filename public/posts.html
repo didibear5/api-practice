@@ -6,6 +6,12 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <title>Document</title>
+  <style>
+    .post-content:hover{
+      color: #95b4ff;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -58,7 +64,7 @@
           return`
             <tr>
               <td>${_.get(post,'author.username','找不到使用者')}</td>
-              <td>${post.content}</td>
+              <td class="post-content" data-id="${post._id}">${post.content}</td>
               <td>${createTime}</td>
               <td><button type="button" class="btn btn-danger delete-post" data-id="${post._id}">X</button></td>
             </tr>
@@ -110,6 +116,12 @@
       .catch(err =>{
         console.error(err);
       });
+    });
+
+    $('#post-list').on('click', '.post-content' ,e => {
+      e.preventDefault();
+      const postId = e.target.dataset.id;
+      window.location = `/post.html?postId=${postId}`;
     });
  
     function redirectToLogin(){
