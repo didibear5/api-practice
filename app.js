@@ -5,6 +5,7 @@ const bodyParser = require('body-parser')
 const app = express()
 app.use(bodyParser.json())
 const auth = require('./auth')
+const port = process.env.PORT || 3000
 
 app.use(express.static('public'))// 讀資料夾裡的檔案
 
@@ -14,6 +15,6 @@ require('./routes/comment')(app, auth)
 require('./routes/user')(app)
 
 // 讓 express server 跑在 port 3000
-app.listen(3000, function () {
-  console.log('meow')
+app.listen(port, function () {
+  console.log(port)
 })

@@ -1,7 +1,9 @@
+const dbURL = process.env.MONGODB_URI || 'mongodb://localhost/testdb'
+
 const mongoose = require('mongoose')
 
 // Set up default mongoose connection
-const mongoDB = 'mongodb://localhost/testdb'
+const mongoDB = dbURL
 mongoose.connect(mongoDB)
 // Get Mongoose to use the global promise library
 mongoose.Promise = global.Promise
