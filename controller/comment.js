@@ -19,9 +19,10 @@ async function getOneComment (req, res) {
 
 async function createComment (req, res) {
   console.log(req.params)
+  const content = htmlEscape(req.body.content)
   const newComment = new Comment({
     post_id: req.params.postId,
-    content: req.body.content,
+    content: content,
     author: req.user._id
   })
   await newComment.save()
@@ -66,6 +67,13 @@ async function updateComment (req, res) {
     console.log(error)
     res.send({ status: 'error', message: '未預期的錯誤' })
   }
+}
+
+function htmlEscape (text) {
+  return text.replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
 
 module.exports = {

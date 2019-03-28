@@ -16,8 +16,9 @@ async function getOnePost (req, res) {
 
 async function createPost (req, res) {
   console.log(req.user)
+  const content = htmlEscape(req.body.content)
   const newPost = new Post({
-    content: req.body.content,
+    content: content,
     author: req.user._id
   })
   await newPost.save()
@@ -65,6 +66,13 @@ async function updatePost (req, res) {
     console.log(error)
     res.send({ status: 'error', message: '未預期的錯誤' })
   }
+}
+
+function htmlEscape (text) {
+  return text.replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
 
 module.exports = {
