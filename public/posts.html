@@ -7,6 +7,10 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <title>Document</title>
   <style>
+    .navbar{
+      margin-bottom: 20px;
+      padding:20px 60px;
+    }
     .post-content:hover{
       color: #95b4ff;
       cursor: pointer;
@@ -14,6 +18,9 @@
   </style>
 </head>
 <body>
+  <nav class="navbar navbar-dark bg-dark navbar-fixed-top">
+    <span style="margin-left: auto; color:white;"></span>
+  </nav>
   <div class="container">
     <table class="table table-dark" id="post-list">
       <thead>
@@ -21,7 +28,7 @@
           <td>作者</td>
           <td>內容</td>
           <td>建立時間</td>
-          <td></td>
+          <td>刪除</td>
         </tr>
       </thead>
       <tbody></tbody>
@@ -55,18 +62,24 @@
       }
     })()
 
+    $('.navbar span').text('Hi, ' + localStorage.getItem('username') + ' !');
+
     function fetchPosts(){
       ajax("GET", '/post/')
       .then(res => {
         console.log(res)
         const postTemplate = res.map(post => {
           const createTime = moment(post.createAt).format('YYYY-MM-DD HH:mm:ss')
+          let deleteBtn = '';
+          if (post.author.username == localStorage.getItem('username')) {
+            deleteBtn = `<td><button type="button" class="btn btn-danger delete-post" data-id="${post._id}">X</button></td>`;
+          }
           return`
             <tr>
               <td>${_.get(post,'author.username','找不到使用者')}</td>
               <td class="post-content" data-id="${post._id}">${post.content}</td>
               <td>${createTime}</td>
-              <td><button type="button" class="btn btn-danger delete-post" data-id="${post._id}">X</button></td>
+              ${deleteBtn}
             </tr>
           `;
         });
@@ -84,6 +97,7 @@
       $('#create-post-form > button').html('Submit...');
       const content = event.target[0].value;
       createPost(content);
+      event.target[0].value = '';
     })
 
     function createPost(content){

@@ -49,6 +49,7 @@
          return;
        }
        localStorage.setItem('auth-token', data.token);
+       localStorage.setItem('username', username);
        localStorage.setItem('status', 'loginSuccess');
        window.location = '/posts.html'
       })

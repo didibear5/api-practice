@@ -7,12 +7,22 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <title>Document</title>
   <style>
+  .navbar{
+    margin-bottom: 20px;
+    padding:20px 60px;
+  }
   .btn-grp{
     margin-top: 10px;
+  }
+  .go-back{
+    margin: 10px 10px 30px 10px;
   }
   </style>
 </head>
 <body>
+  <nav class="navbar navbar-dark bg-dark navbar-fixed-top">
+    <span style="margin-left: auto; color:white;"></span>
+  </nav>
   <div class="container">
     <h2>文章</h2>
     <div class="card">
@@ -20,6 +30,7 @@
       </div>
     </div>
     <br>
+    <button class="btn btn-primary go-back">go back</button>
     <h2>留言</h2>
     <ul class="list-group">
     </ul>
@@ -35,20 +46,27 @@
     const params = windowURL.searchParams;
     const postId = params.get('postId');
 
+    $('.navbar span').text('Hi, ' + localStorage.getItem('username') + ' !');
+    
     function fetchPost(){
       ajax("GET", '/post/' + postId)
       .then(res => {
         const postTemplate = res.map(post => {
           const createTime = moment(post.createAt).format('YYYY-MM-DD HH:mm:ss')
+          let editAndSaveBtn = '';
+          if (post.author.username == localStorage.getItem('username')) {
+            editAndSaveBtn = 
+              `<div class="btn-grp">
+                <button class="btn btn-primary post-edit">edit</button>
+                <button class="btn btn-primary post-save">save</button>
+              </div>`;
+          }
           return`
             <div>
               <div>作者：${_.get(post,'author.username','找不到使用者')}</div>
               <hr>
               <div class="post-content" data-id="${post._id}">${post.content}</div>
-              <div class="btn-grp">
-                <button class="btn btn-primary post-edit">edit</button>
-                <button class="btn btn-primary post-save">save</button>
-              </div>
+              ${editAndSaveBtn}
               <hr>
               <div>發文時間：${createTime}</div>
             </div>
@@ -86,12 +104,17 @@
     }
     fetchComments();
 
+    $('.go-back').click(() => {
+      window.location = '/posts.html';
+    });
+
     $('.card-body').on('click', '.post-edit' ,e => {
       e.preventDefault();
       const postContent = $('.post-content').text();
       $('.post-edit').hide();
       $('.post-save').show();
-      $('.post-content').after(`<input type="text" class="post-input" value="${postContent}" style="width:100%">`)
+      $('.post-content').after(`<input type="text" class="post-input" style="width:100%">`);
+      $('.card-body input').val(postContent);
       $('.post-content').hide();
     });
 
