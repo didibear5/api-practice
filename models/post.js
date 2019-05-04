@@ -14,7 +14,8 @@ const PostModelSchema = new Schema({
     ref: 'User'
   },
   createAt: { type: Date, default: Date.now },
-  updateAt: { type: Date, default: Date.now }
+  updateAt: { type: Date, default: Date.now },
+  images: [String]
 })
 
 module.exports = mongoose.model('Post', PostModelSchema)

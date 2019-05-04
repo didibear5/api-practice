@@ -1,2 +1,4 @@
 .DS-Store
 node_modules
+config/aws_config.json
+upload

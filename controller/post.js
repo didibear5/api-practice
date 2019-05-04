@@ -15,11 +15,12 @@ async function getOnePost (req, res) {
 }
 
 async function createPost (req, res) {
-  console.log(req.user)
+  console.log(req.files)
   const content = htmlEscape(req.body.content)
   const newPost = new Post({
     content: content,
-    author: req.user._id
+    author: req.user._id,
+    images: _.map(req.files, 'location')
   })
   await newPost.save()
   console.log(req.body)
