@@ -48,7 +48,7 @@ app.use('/upload', express.static('upload'))
 
 require('./db')
 require('./routes/post')(app, auth, upload)
-require('./routes/comment')(app, auth)
+require('./routes/comment')(app, auth, upload)
 require('./routes/user')(app)
 
 app.post('/upload', upload.single('file'), function (req, res) {

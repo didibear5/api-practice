@@ -34,6 +34,19 @@
     <h2>留言</h2>
     <ul class="list-group">
     </ul>
+    <form id="create-comment" style="margin-top:20px;">
+      <div class="form-group">
+        <label for="comment-content">新增留言內容</label>
+        <textarea class="form-control" rows="3"></textarea>
+      </div>
+      <div>
+        <label for="post-image">
+          <a class="btn btn-success">select 3 images</a>
+        </label>
+        <input type="file" name="image" id="post-image" style="display:none" multiple>
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
   </div>
 <!-- 畫面出來在在js -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -61,10 +74,17 @@
                 <button class="btn btn-primary post-save">save</button>
               </div>`;
           }
+          const imageField = [];
+          if(post.images.length > 0) {
+            post.images.forEach(imagePath => {
+              imageField.push(`<img src="${imagePath}" width="100">`)
+            });
+          }
           return`
             <div>
               <div>作者：${_.get(post,'author.username','找不到使用者')}</div>
               <hr>
+              <div>${imageField.join('')}</div>
               <div class="post-content" data-id="${post._id}">${post.content}</div>
               ${editAndSaveBtn}
               <hr>
@@ -86,10 +106,17 @@
       .then(res => {
         const commentTemplate = res.map(comment => {
           const createTime = moment(comment.createAt).format('YYYY-MM-DD HH:mm:ss')
+          const imageField = [];
+          if(comment.images.length > 0) {
+            comment.images.forEach(imagePath => {
+              imageField.push(`<img src="${imagePath}" width="100">`)
+            });
+          }
           return`
             <li class="list-group-item">
               <div>作者：${_.get(comment,'author.username','找不到使用者')}</div>
               <hr>
+              <div>${imageField.join('')}</div>
               <div class="comment-content" data-id="${comment._id}">${comment.content}</div>
               <hr>
               <div>發文時間：${createTime}</div>
@@ -138,8 +165,45 @@
       })
     });
 
+    $('#create-comment').submit(function(event){
+      event.preventDefault();
+      $('#create-comment > button').attr('disabled', 'disable');
+      $('#create-comment > button').html('Submit...');
 
-    function ajax(type, url, data){
+      const formData = new FormData();
+      formData.append( 'content', event.target[0].value )
+      for(let i = 0; i < 3; i++) {
+        const file = event.target[1].files[i]
+      formData.append( 'images', file )
+      }
+      createComment(formData);
+      event.target[0].value = '';
+      document.getElementById("post-image").value = '';
+    })
+
+    function createComment(formData){
+      const token = localStorage.getItem('auth-token');
+      if(_.isEmpty(token)) return redirectToLogin();
+      ajax("POST", '/post/' + postId + '/comment', formData, false)
+      .then(res => {
+        if(res.message === "Invalid token") return redirectToLogin();
+        fetchComments();
+      })
+      .catch(err =>{
+        console.error(err);
+      })
+      .finally(() => {
+        $('#create-comment > button').attr('disabled', false);
+        $('#create-comment > button').html('Submit');
+      });
+    }
+
+    function redirectToLogin(){
+      const res = confirm('是否到登入頁');
+      if(res)return window.location = '/index.html';
+    }
+
+    function ajax(type, url, data, contentType = 'application/json; charset=utf-8'){
       const token = localStorage.getItem('auth-token');
       if(_.isEmpty(token)) return redirectToLogin();
       return new Promise((reslove, reject) => {
@@ -148,7 +212,8 @@
           url: url,
           data: data,
           dataType: 'json',
-          contentType: "application/json; charset=utf-8",
+          contentType,
+          processData: false,
           headers: {
             authorization: 'Bearer ' + token
           }

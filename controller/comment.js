@@ -23,11 +23,12 @@ async function createComment (req, res) {
   const newComment = new Comment({
     post_id: req.params.postId,
     content: content,
-    author: req.user._id
+    author: req.user._id,
+    images: _.map(req.files, 'location')
   })
   await newComment.save()
   console.log(req.body)
-  res.send('comment created ok')
+  res.send({ status: 'success', message: 'comment created' })
 }
 
 async function deleteComment (req, res) {
